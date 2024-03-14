@@ -1,0 +1,155 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+import tensorflow as tf
+from sklearn.impute import KNNImputer
+from sklearn.metrics import confusion_matrix, classification_report
+df=pd.read_excel("marketing_campaign.xlsx")
+df
+df.info()
+df.drop("ID",axis=1,inplace=True)
+df.isnull().sum()
+df[df["Income"].isnull()]
+sns.boxplot(df["Income"])
+plt.show()
+df["Income"]=df["Income"].fillna(df["Income"].median())
+df.isnull().sum()
+df['Age']=2023-df['Year_Birth']
+df
+df.drop("Dt_Customer",axis=1,inplace=True)
+df['Spending']=df.MntWines+df.MntFruits+df.MntMeatProducts+df.MntFishProducts+
+df.MntSweetProducts+df.MntGoldProds
+df['Children'] = df.Kidhome+df.Teenhome
+years_edu={'Education':['Graduation','PhD','2nCycle','Master','Basic'],'Edu_years':
+[16,21,12,18,6]}
+years_edu=pd.DataFrame(years_edu)
+df=pd.merge(df,years_edu,on='Education')
+pd.options.display.float_format='{:.2f}'.format
+14
+df[['Income','Age','Spending','Children','Edu_years']].describe()df['Dependants']= 
+df['Kidhome'] + df['Teenhome']
+amt_col= [col for col in df.columns if 'Mnt' in col ]
+df['Total_amount'] = df[amt_col].sum(axis=1)
+purchase_col = [col for col in df.columns if 'Purchases' in col]
+df['Total_Purchases'] = df[purchase_col].sum(axis=1)
+campaigns_cols = [col for col in df.columns if 'Cmp' in col] + ['Response'] 
+df['TotalCampaignsAcc'] = df[campaigns_cols].sum(axis=1)
+df.hist(column = 'Income',bins = np.arange(0,200000,1000) );
+df[['Dependants','Total_amount','Total_Purchases','TotalCampaignsAcc']].sort values
+('Total_amount', ascending =False)
+plt.figure(figsize=(20,20))
+sns.heatmap(df.corr(),annot=True)
+plt.show()
+correlation_matrix = df.select_dtypes(include = [int,float])
+plt.subplots(figsize=(11,11))
+cbar_kws = {"shrink":.8, 'extend':'max', 'extendfrac':.2,"drawedges":True} 
+sns.heatmap(correlation_matrix.corr(method='kendall'),vmin=1,vmax=1,center=0,cm
+ap="vlag",cbar_kws=cbar_kws,linewidths=1,linecolor='black',square=True,cbar=(0,0.
+5,0.65,1));
+plt.figure(figsize=(14,6))
+sns.scatterplot(x=df.Income,y=df.Total_amount,hue=df.Dependants,s=120,palette=['l
+ightcoral','dodgerblue','green','black']);
+sns.barplot( x='Dependants',y='Total_amount' , data=df);
+sns.lmplot(x='NumWebVisitsMonth', y='NumWebPurchases',data=df);
+sns.lmplot(x='NumWebVisitsMonth', y='NumDealsPurchases',data=df);
+cam_succes= pd.DataFrame(df[['AcceptedCmp1', 'AcceptedCmp2', 'AcceptedCmp3', 
+'AcceptedCmp4','AcceptedCmp5','Response']].mean()*100,columns=['Percent']).
+reset_index())
+15
+sns.barplot(x='Percent',y='index',data=cam_success.sort_values('Percent'),palette='
+Blues')
+plt.xlabel('Accepted (%)')
+plt.ylabel('Campaign')
+plt.title('Marketing campaign success rate', size=16);
+binary_cols = [col for col in df.columns if 'Accepted' in col] + ['Response', 'Complain']
+mnt_cols = [col for col in df.columns if 'Mnt' in col]
+channel_cols = [col for col in df.columns if 'Num' in col] + [ 'TotalCampaignsAcc']
+spending=pd.DataFrame(round(df[mnt_cols].mean(),columns=['Average']).sort_value
+s(by='Average').reset_index()
+ax = sns.barplot(x='Average', y='index', data=spending, palette='Blues')
+plt.ylabel('Amount spent on...')
+for p,q in zip(ax.patches, spending['Average']):
+ ax.text(x=q+40,y=p.get_y()+0.5,s=q,ha="center") ;
+ 
+demographics=pd.DataFrame(round(df.drop(columns=binary_cols+mnt_cols+chann
+el_cols).mean(),1),columns=['Average']).reindex(['Year_Birth', 'Income', 'Dependents', 
+'Kidhome', 'Teenhome', 'Recency'])
+demographics
+df.groupby('Marital_Status')['MntWines'].sum().sort_values(ascending=False).plot
+(kind='bar');
+plt.ylabel('Amount spent on wines');
+df.groupby('Education')['MntWines'].sum().sort_values(ascending=False).plot(kind=
+'bar');
+plt.ylabel('Amount spent on wines');
+campaign=df[['AcceptedCmp3','AcceptedCmp4','AcceptedCmp5','AcceptedCmp1',
+'AcceptedCmp2']]
+camp_perform=campaign.melt().groupby('variable').sum()
+16
+camp_perform['percent']=camp_perform['value']/666
+camp_perform
+df["Education"].value_counts()
+from sklearn.preprocessing import OrdinalEncoder,LabelEncoder
+encoder=OrdinalEncoder(categories=[["Basic","2nCycle","Graduation","Master","PhD
+"]])
+df["Education"]=encoder.fit_transform(df[["Education"]])
+df["Marital_Status"].value_counts()
+label_encoder=LabelEncoder()
+df["Marital_Status"]=label_encoder.fit_transform(df["Marital_Status"])
+df.info()
+df["Response"].value_counts()
+x=df.drop("Response",axis=1)
+y=df["Response"]
+x.shape,y.shape
+!pip install imblearn
+from sklearn.model_selection import train_test_split
+from imblearn.over_sampling import RandomOverSampler
+x,y=RandomOverSampler().fit_resample(x,y)
+x.shape,y.shape
+xtr,xte,ytr,yte=train_test_split(x,y,test_size=0.2,random_state=42)
+!pip install xgboost
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+17
+from sklearn.metrics import accuracy_score
+models={"LogisticRegression":LogisticRegression(),
+ "DecisionTreeClassifier":DecisionTreeClassifier(),
+ "RandomForestClassifier":RandomForestClassifier(),
+ "SVC":SVC(),
+ "KNeighborsClassifier":KNeighborsClassifier(),
+ "GaussianNB":GaussianNB(),
+ "XGBClassifier":XGBClassifier()}
+def evaluate_model(x_train,x_test,y_train,y_test,models):
+ report={}
+ for i in range(len(models)):
+ model_name=list(models.keys())[i]
+ model=list(models.values())[i]
+ model.fit(x_train,y_train)
+ y_pred=model.predict(x_test)
+ score=accuracy_score(y_pred,y_test)
+ print(f"{model_name} : {score}")
+ print("-------------------------------\n")
+ report[list(models.keys())[i]]=score
+ for key,value in report.items():
+ if value==max(list(report.values())):
+ best_model_name=key
+ best_model=models[best_model_name]
+ print(f"The best model is {best_model_name}")
+ return best_model
+model=evaluate_model(xtr,xte,ytr,yte,models)
+import pickle
+file_path="D:\marketing_campaign\model.pkl"
+with open(file_path,"wb") as file:
+ pickle.dump(model,file)
+ file.close()
+
+ 
+ 
+ 
+ 
